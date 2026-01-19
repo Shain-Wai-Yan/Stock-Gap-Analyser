@@ -33,13 +33,28 @@ export async function GET(request: Request) {
     }
 
     const data = await response.json()
-    console.log('[v0] Backend news response:', data)
+    console.log('[v0] Backend news raw response type:', typeof data)
+    console.log('[v0] Backend news response keys:', Object.keys(data || {}))
+    console.log('[v0] Backend news response:', JSON.stringify(data, null, 2))
     
     // Backend returns { success: true, data: [...], count: n }
-    // Extract the data array
-    const newsData = data.data || []
+    // Extract the data array - it's already in data.data
+    let newsArray: any[] = []
+    
+    if (Array.isArray(data)) {
+      // Response is directly an array
+      newsArray = data
+    } else if (data && Array.isArray(data.data)) {
+      // Response is wrapped in { data: [...] }
+      newsArray = data.data
+    } else {
+      console.error('[v0] Unexpected news response format:', data)
+    }
+    
+    console.log('[v0] Extracted news array length:', newsArray.length)
+    console.log('[v0] First news item:', newsArray[0])
 
-    return NextResponse.json(newsData, {
+    return NextResponse.json(newsArray, {
       headers: {
         'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120',
       },

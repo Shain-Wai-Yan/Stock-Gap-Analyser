@@ -36,16 +36,16 @@ export const ChartDataSchema = z.object({
 
 export const ChartArraySchema = z.array(ChartDataSchema)
 
-// News Item Schema
+// News Item Schema - Made more lenient for real API data
 export const NewsItemSchema = z.object({
-  id: z.string(),
-  title: z.string().min(1),
-  summary: z.string(),
-  source: z.string(),
-  url: z.string().url(),
-  publishedAt: z.string(),
-  sentiment: z.enum(['bullish', 'neutral', 'bearish']).optional(),
-  relatedSymbols: z.array(z.string()).optional(),
+  id: z.string().optional().default(''),
+  title: z.string().min(1).optional().default('Untitled'),
+  summary: z.string().optional().default(''),
+  source: z.string().optional().default('Unknown'),
+  url: z.string().url().optional().default('https://example.com'),
+  publishedAt: z.string().optional().default(() => new Date().toISOString()),
+  sentiment: z.enum(['bullish', 'neutral', 'bearish']).optional().default('neutral'),
+  relatedSymbols: z.array(z.string()).optional().default([]),
 })
 
 export const NewsArraySchema = z.array(NewsItemSchema)

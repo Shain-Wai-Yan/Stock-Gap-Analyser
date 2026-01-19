@@ -13,8 +13,9 @@ import {
   NetworkError,
 } from './validation'
 
-// Environment variable for API base URL
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+// Use Next.js API routes which will proxy to backend
+// This allows for better error handling, caching, and transformation
+const API_BASE_URL = ''  // Empty string means same-origin /api/* routes
 
 class ApiClient {
   private baseUrl: string
@@ -98,13 +99,14 @@ class ApiClient {
 
   // Gap Scanner
   async getGaps(): Promise<GapData[]> {
-    const response = await this.fetch<{ success: boolean; data: unknown }>('/api/gaps')
-    return validateData(GapArraySchema, response.data, 'gaps')
+    const response = await this.fetch<unknown>('/api/gaps')
+    // Response is already transformed by Next.js API route
+    return validateData(GapArraySchema, response, 'gaps')
   }
 
   async getGapDetails(symbol: string): Promise<GapData> {
-    const response = await this.fetch<{ success: boolean; data: unknown }>(`/api/gaps/${symbol}`)
-    return validateData(GapDataSchema, response.data, `gap details for ${symbol}`)
+    const response = await this.fetch<unknown>(`/api/gaps/${symbol}`)
+    return validateData(GapDataSchema, response, `gap details for ${symbol}`)
   }
 
   // Historical Fill Rate
@@ -114,17 +116,17 @@ class ApiClient {
 
   // News & Sentiment
   async getNews(symbol?: string): Promise<NewsItem[]> {
-    const endpoint = symbol ? `/api/news/${symbol}` : '/api/news'
-    const response = await this.fetch<{ success: boolean; data: unknown }>(endpoint)
-    return validateData(NewsArraySchema, response.data, 'news')
+    const endpoint = symbol ? `/api/news?symbol=${symbol}` : '/api/news'
+    const response = await this.fetch<unknown>(endpoint)
+    return validateData(NewsArraySchema, response, 'news')
   }
 
   // Backtesting
   async runBacktest(symbol: string, params?: Record<string, unknown>): Promise<BacktestResult> {
-    const response = await this.fetch<{ success: boolean; data: unknown }>(`/api/backtest/${symbol}`, {
-      method: 'GET',  // Backend uses GET
+    const response = await this.fetch<unknown>(`/api/backtest/${symbol}`, {
+      method: 'GET',
     })
-    return validateData(BacktestResultSchema, response.data, `backtest for ${symbol}`)
+    return validateData(BacktestResultSchema, response, `backtest for ${symbol}`)
   }
 
   // Chart Data
