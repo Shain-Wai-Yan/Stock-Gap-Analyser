@@ -13,9 +13,9 @@ import {
   NetworkError,
 } from './validation'
 
-// Use Next.js API routes which will proxy to backend
-// This allows for better error handling, caching, and transformation
-const API_BASE_URL = ''  // Empty string means same-origin /api/* routes
+// Direct backend connection for production deployment
+// If NEXT_PUBLIC_API_URL is set, use it directly; otherwise use Next.js API routes
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || ''  // Empty string means same-origin /api/* routes
 
 class ApiClient {
   private baseUrl: string
@@ -100,8 +100,12 @@ class ApiClient {
   // Gap Scanner
   async getGaps(): Promise<GapData[]> {
     const response = await this.fetch<unknown>('/api/gaps')
+    console.log('[v0] Raw gaps response:', JSON.stringify(response, null, 2))
+    console.log('[v0] Response type:', typeof response, 'Is array:', Array.isArray(response))
     // Response is already transformed by Next.js API route
-    return validateData(GapArraySchema, response, 'gaps')
+    const validated = validateData(GapArraySchema, response, 'gaps')
+    console.log('[v0] Validated gaps:', validated.length, 'gaps')
+    return validated
   }
 
   async getGapDetails(symbol: string): Promise<GapData> {
@@ -118,7 +122,10 @@ class ApiClient {
   async getNews(symbol?: string): Promise<NewsItem[]> {
     const endpoint = symbol ? `/api/news?symbol=${symbol}` : '/api/news'
     const response = await this.fetch<unknown>(endpoint)
-    return validateData(NewsArraySchema, response, 'news')
+    console.log('[v0] Raw news response:', JSON.stringify(response, null, 2))
+    const validated = validateData(NewsArraySchema, response, 'news')
+    console.log('[v0] Validated news:', validated.length, 'items')
+    return validated
   }
 
   // Backtesting

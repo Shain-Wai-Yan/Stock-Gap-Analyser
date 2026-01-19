@@ -11,7 +11,17 @@ export async function GET(request: Request) {
     const maxGap = searchParams.get('max_gap') || '10.0'
     const limit = searchParams.get('limit') || '50'
 
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'https://p01--stock-analyser-backend--xz6t2t2ksd68.code.run'
+    // Get backend URL from environment variable
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL
+    
+    if (!backendUrl) {
+      console.error('[v0] NEXT_PUBLIC_API_URL not set')
+      return NextResponse.json(
+        { error: 'Backend URL not configured. Please set NEXT_PUBLIC_API_URL environment variable.' },
+        { status: 503 }
+      )
+    }
+    
     const url = `${backendUrl}/api/gaps?min_gap=${minGap}&max_gap=${maxGap}&limit=${limit}`
     
     console.log('[v0] Fetching gaps from backend:', url)
