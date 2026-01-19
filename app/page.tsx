@@ -1,5 +1,7 @@
 'use client'
 
+import React from "react"
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -31,6 +33,23 @@ export default function DashboardPage() {
   const { data: gaps, isLoading: gapsLoading, error: gapsError } = useGaps(30000)
   const { data: news, isLoading: newsLoading } = useNews()
   const { data: backtestResult } = useBacktest(selectedSymbol)
+  const [marketStatus, setMarketStatus] = React.useState<any>(null)
+  
+  // Fetch market status
+  React.useEffect(() => {
+    const fetchMarketStatus = async () => {
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/market-status`)
+        const data = await response.json()
+        setMarketStatus(data)
+      } catch (err) {
+        console.error('Failed to fetch market status:', err)
+      }
+    }
+    fetchMarketStatus()
+    const interval = setInterval(fetchMarketStatus, 60000) // Update every minute
+    return () => clearInterval(interval)
+  }, [])
 
   // WebSocket for real-time updates (only if configured)
   const { status: wsStatus } = useRealtimeGaps()
@@ -182,6 +201,14 @@ export default function DashboardPage() {
             <span className={`whitespace-nowrap hidden sm:inline ${getWSStatusColor()}`}>
               WS: {wsStatus.charAt(0).toUpperCase() + wsStatus.slice(1)}
             </span>
+            {marketStatus && (
+              <>
+                <span className="hidden sm:inline">•</span>
+                <span className={`whitespace-nowrap hidden sm:inline ${marketStatus.is_open ? 'text-success' : 'text-warning'}`}>
+                  Market: {marketStatus.is_open ? 'Open' : 'Closed'}
+                </span>
+              </>
+            )}
             <span className="hidden md:inline">•</span>
             <span className={`whitespace-nowrap hidden md:inline flex items-center gap-1 ${notificationsEnabled ? 'text-success' : 'text-muted-foreground'}`}>
               <BellRing className="h-3 w-3" />
