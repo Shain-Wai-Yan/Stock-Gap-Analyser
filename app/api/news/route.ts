@@ -1,36 +1,45 @@
 import { NextResponse } from 'next/server'
-import { mockNews } from '@/lib/mock-data'
 
 /**
  * GET /api/news
- * Fetch latest market news
- * 
- * Replace this with your backend API call
+ * Fetch latest market news from backend
  */
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
     const symbol = searchParams.get('symbol')
+    const limit = searchParams.get('limit') || '10'
 
-    // TODO: Replace with actual backend API call
-    // const backendUrl = process.env.BACKEND_API_URL
-    // const url = symbol 
-    //   ? `${backendUrl}/api/news?symbol=${symbol}`
-    //   : `${backendUrl}/api/news`
-    // const response = await fetch(url)
-    // const data = await response.json()
-    // return NextResponse.json(data)
-
-    await new Promise(resolve => setTimeout(resolve, 100))
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'https://p01--stock-analyser-backend--xz6t2t2ksd68.code.run'
+    const url = symbol 
+      ? `${backendUrl}/api/news/${symbol}?limit=${limit}`
+      : `${backendUrl}/api/news?limit=${limit}`
     
-    // Filter by symbol if provided
-    const filteredNews = symbol
-      ? mockNews.filter(news => 
-          news.relatedSymbols?.includes(symbol.toUpperCase())
-        )
-      : mockNews
+    console.log('[v0] Fetching news from backend:', url)
+    
+    const response = await fetch(url, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      next: { revalidate: 60 } // Cache for 60 seconds
+    })
 
-    return NextResponse.json(filteredNews, {
+    if (!response.ok) {
+      console.error('[v0] Backend news fetch failed:', response.status)
+      return NextResponse.json(
+        { error: 'Failed to fetch news from backend' },
+        { status: response.status }
+      )
+    }
+
+    const data = await response.json()
+    console.log('[v0] Backend news response:', data)
+    
+    // Backend returns { success: true, data: [...], count: n }
+    // Extract the data array
+    const newsData = data.data || []
+
+    return NextResponse.json(newsData, {
       headers: {
         'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120',
       },
