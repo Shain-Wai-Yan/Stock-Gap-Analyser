@@ -36,19 +36,19 @@ export const ChartDataSchema = z.object({
 
 export const ChartArraySchema = z.array(ChartDataSchema)
 
-// News Item Schema - Made more lenient for real API data
+// News Item Schema - Very lenient to accept backend format
 export const NewsItemSchema = z.object({
-  id: z.string().optional().default(''),
-  title: z.string().min(1).optional().default('Untitled'),
-  summary: z.string().optional().default(''),
-  source: z.string().optional().default('Unknown'),
-  url: z.string().url().optional().default('https://example.com'),
-  publishedAt: z.string().optional().default(() => new Date().toISOString()),
-  sentiment: z.enum(['bullish', 'neutral', 'bearish']).optional().default('neutral'),
-  relatedSymbols: z.array(z.string()).optional().default([]),
-})
+  id: z.string().or(z.number()).transform(String).catch(''),
+  title: z.string().catch('Untitled'),
+  summary: z.string().catch(''),
+  source: z.string().catch('Unknown'),
+  url: z.string().catch('https://example.com'),
+  publishedAt: z.string().catch(() => new Date().toISOString()),
+  sentiment: z.enum(['bullish', 'neutral', 'bearish']).catch('neutral'),
+  relatedSymbols: z.array(z.string()).catch([]),
+}).passthrough() // Allow extra fields from backend
 
-export const NewsArraySchema = z.array(NewsItemSchema)
+export const NewsArraySchema = z.array(NewsItemSchema).catch([])
 
 // Backtest Result Schema
 export const BacktestResultSchema = z.object({
