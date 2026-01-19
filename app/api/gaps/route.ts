@@ -44,30 +44,31 @@ export async function GET(request: Request) {
     const data = await response.json()
     console.log('[v0] Backend gaps response:', JSON.stringify(data, null, 2))
     
-    // Backend returns { success: true, data: [...gaps...], count: n }
-    // Transform backend format to frontend format
-    const backendGaps = Array.isArray(data.data) ? data.data : []
+    // Backend returns array directly: [...gaps...]
+    const backendGaps = Array.isArray(data) ? data : []
+    
+    console.log('[v0] Backend gaps count:', backendGaps.length)
     
     // Map backend gaps to frontend GapData schema
     const transformedGaps = backendGaps.map((gap: any) => ({
       symbol: gap.symbol || '',
-      name: gap.symbol || '', // Backend doesn't return name, use symbol
-      gapPercent: gap.gapPercent || 0,
-      currentPrice: gap.price || 0,
-      previousClose: gap.previousClose || 0,
+      name: gap.name || gap.symbol || '',
+      gapPercent: gap.gap_percent || 0,
+      currentPrice: gap.current_price || 0,
+      previousClose: gap.previous_close || 0,
       volume: gap.volume || 0,
-      volumeRatio: gap.volumeRatio || 1,
-      sentimentScore: (gap.sentiment || 0) * 0.5 + 0.5, // Convert -1 to 1 range to 0 to 1
-      historicalFillRate: (gap.fillProbability || 0.5) * 100, // Convert to percentage
+      volumeRatio: gap.volume_ratio || 1,
+      sentimentScore: gap.sentiment_score || 0.5,
+      historicalFillRate: gap.historical_fill_rate || 65,
       conviction: mapConviction(gap.conviction),
-      sector: 'Unknown', // Backend doesn't provide this
-      marketCap: 'Unknown', // Backend doesn't provide this
-      preMarketHigh: gap.price || 0, // Use current price as fallback
-      preMarketLow: gap.price || 0, // Use current price as fallback
-      vwap: gap.price || 0, // Use current price as fallback
-      gapFillProbability: gap.fillProbability || 0.5,
-      reasons: gap.reasons || [],
-      timestamp: gap.timestamp || new Date().toISOString(),
+      sector: gap.sector || 'Unknown',
+      marketCap: gap.market_cap || 'Unknown',
+      preMarketHigh: gap.premarket_high || gap.current_price || 0,
+      preMarketLow: gap.premarket_low || gap.current_price || 0,
+      vwap: gap.vwap || gap.current_price || 0,
+      gapFillProbability: 0.65, // Default from historical fill rate
+      reasons: [],
+      timestamp: gap.last_updated || new Date().toISOString(),
     }))
     
     console.log('[v0] Transformed gaps:', JSON.stringify(transformedGaps, null, 2))
